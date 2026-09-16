@@ -151,6 +151,9 @@ def api_data():
         "time": datetime.now().strftime("%H:%M:%S")
     })
 
+# ===== 新增：注册资金流蓝图（不影响上方竞价选股）=====
+from flow_app import flow_bp
+app.register_blueprint(flow_bp)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
