@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>主力资金跟踪</title>
+<style>
+body{margin:0;font-family:-apple-system,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#7c3aed,#2563eb);padding:16px;text-align:center;font-size:19px;font-weight:700}
+.sub{font-size:12px;opacity:.85;margin-top:4px}
+.tabs{display:flex;margin:10px;gap:8px}
+.tab{flex:1;text-align:center;padding:10px;border-radius:8px;background:#1e293b;color:#94a3b8;font-weight:600}
+.tab.active{background:#7c3aed;color:#fff}
+.panel{display:none;margin:10px;border-radius:12px;overflow:hidden}
+.panel.active{display:block}
+.meta{text-align:center;font-size:12px;color:#64748b;margin:6px}
+.card{background:#1e293b;padding:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:#94a3b8;padding:8px;border-bottom:1px solid #334155;text-align:right;white-space:nowrap}
+th:first-child{text-align:left}
+td{padding:8px;border-bottom:1px solid #334155;text-align:right;white-space:nowrap}
+td:first-child{text-align:left}
+.up{color:#f87171;font-weight:700}
+.down{color:#4ade80}
+.refresh{text-align:center;color:#64748b;font-size:11px;margin:8px}
+</style>
+</head>
+<body>
+<div class="header">
+  💰 主力资金跟踪
+  <div class="sub">板块 + 个股主力净流入 · 估算值，非真实逐笔 · 非投资建议</div>
+</div>
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('sector',this)">📊 板块资金流</div>
+  <div class="tab" onclick="switchTab('stock',this)">🚀 个股主力</div>
+</div>
+<div class="meta" id="meta"></div>
+
+<div class="panel active" id="panel-sector">
+  <div class="card">
+    <table>
+      <tr><th>板块</th><th>主力净流入(亿)</th><th>净占比%</th></tr>
+      <tbody id="sector-body"><tr><td colspan="3" style="text-align:center;color:#94a3b8">加载中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel" id="panel-stock">
+  <div class="card">
+    <table>
+      <tr><th>代码/名称</th><th>涨幅%</th><th>成交额(万)</th><th>主力净额(万)</th></tr>
+      <tbody id="stock-body"><tr><td colspan="4" style="text-align:center;color:#94a3b8">加载中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="refresh">每30秒自动刷新 · 交易时段数据最实时</div>
+
+<script>
+let curTab = 'sector';
+function switchTab(tab, el){
+  curTab = tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+  load();
+}
+function load(){
+  fetch("/flow/api/flow_data").then(r=>r.json()).then(res=>{
+    document.getElementById('meta').textContent = "更新 " + (res.time||'-') + " · 板块 " + (res.sectors||[]).length + " · 个股 " + (res.stocks||[]).length;
+    const sb = document.getElementById('sector-body');
+    if(res.sectors && res.sectors.length){
+      sb.innerHTML = res.sectors.map(s=>`<tr><td>${s.name}</td><td class="${s.net>=0?'up':'down'}">${s.net}</td><td class="${s.net>=0?'up':'down'}">${s.ratio}</td></tr>`).join('');
+    } else sb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#fbbf24">暂无板块数据</td></tr>';
+    const tb = document.getElementById('stock-body');
+    if(res.stocks && res.stocks.length){
+      tb.innerHTML = res.stocks.map(s=>`<tr><td>${s.code}<br>${s.name}${s.hot?' 🔥':''}</td><td class="${s.pct>=0?'up':'down'}">${s.pct}%</td><td>${s.amount}</td><td class="${s.net>=0?'up':'down'}">${s.net}</td></tr>`).join('');
+    } else tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#fbbf24">暂无个股数据</td></tr>';
+  }).catch(()=>{});
+}
+load(); setInterval(load, 30000);
+</script>
+</body>
+</html>
