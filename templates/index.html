@@ -1,78 +1,74 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>竞价选股看板</title>
-    <style>
-        body { font-family: -apple-system, sans-serif; padding: 15px; background: #f5f5f5; }
-        h2 { margin-bottom: 10px; }
-        .status { padding: 8px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; }
-        .active { background: #d4edda; color: #155724; }
-        .inactive { background: #fff3cd; color: #856404; }
-        .meta { font-size: 12px; color: #666; margin-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
-        th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: right; }
-        th { background: #f8f9fa; text-align: center; }
-        td:first-child, th:first-child { text-align: left; }
-        .up { color: #c0392b; }
-        .down { color: #27ae60; }
-        .S { background: #c0392b; color: #fff; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
-        .A { background: #e67e22; color: #fff; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
-        .B { background: #f1c40f; color: #333; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
-        .C { color: #999; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>竞价选股 · 真实定盘版</title>
+<style>
+body{margin:0;font-family:-apple-system,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#dc2626,#ea580c);padding:16px;text-align:center;font-size:19px;font-weight:700}
+.sub{font-size:12px;opacity:.85;margin-top:4px}
+.status{text-align:center;padding:10px;font-size:14px;font-weight:600;margin:10px;border-radius:8px}
+.active{background:#064e3b;color:#4ade80}
+.battle{background:#451a03;color:#fbbf24}
+.fake{background:#451a03;color:#fbbf24}
+.continuous{background:#1e3a5f;color:#60a5fa}
+.closed{background:#1e293b;color:#94a3b8}
+.meta{text-align:center;font-size:12px;color:#64748b;margin:6px}
+.card{background:#1e293b;margin:10px;border-radius:12px;padding:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:#94a3b8;font-weight:600;padding:8px;border-bottom:1px solid #334155;white-space:nowrap;text-align:right}
+th:first-child{text-align:left}
+td{padding:8px;border-bottom:1px solid #334155;white-space:nowrap;text-align:right}
+td:first-child{text-align:left}
+.up{color:#f87171;font-weight:700}
+.badge{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+.S{background:#fef3c7;color:#92400e}
+.A{background:#fee2e2;color:#991b1b}
+.B{background:#dbeafe;color:#1e40af}
+.C{background:#475569;color:#cbd5e1}
+.refresh{text-align:center;color:#64748b;font-size:11px;margin:6px}
+</style>
 </head>
 <body>
-    <h2>📈 早盘竞价选股</h2>
-    <div id="status" class="status inactive">加载中...</div>
-    <div class="meta" id="meta"></div>
-    <table>
-        <thead>
-            <tr>
-                <th>代码/名称</th>
-                <th>竞价价</th>
-                <th>涨幅</th>
-                <th>成交量</th>
-                <th>成交额(万)</th>
-                <th>评级</th>
-            </tr>
-        </thead>
-        <tbody id="data-body">
-            <tr><td colspan="6" style="text-align:center;">暂无数据</td></tr>
-        </tbody>
-    </table>
-    <script>
-        async function fetchData() {
-            try {
-                const res = await fetch('/api/data');
-                const json = await res.json();
-                document.getElementById('status').textContent = json.active ? '🟢 竞价时段' : '🟡 非竞价时段';
-                document.getElementById('status').className = 'status ' + (json.active ? 'active' : 'inactive');
-                document.getElementById('meta').textContent = `更新: ${json.time || '-'} | 命中: ${json.count || 0} 只`;
-                const tb = document.getElementById('data-body');
-                tb.innerHTML = '';
-                if (json.data && json.data.length) {
-                    json.data.forEach(r => {
-                        const tr = document.createElement('tr');
-                        const pctCls = parseFloat(r.pct) >= 0 ? 'up' : 'down';
-                        tr.innerHTML = `
-                            <td>${r.code}<br>${r.name}</td>
-                            <td>${r.price}</td>
-                            <td class="${pctCls}">${r.pct}%</td>
-                            <td>${r.vol}</td>
-                            <td>${r.amount}</td>
-                            <td><span class="${r.level}">${r.level}</span></td>
-                        `;
-                        tb.appendChild(tr);
-                    });
-                } else {
-                    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;">无数据（接口未更新或非竞价）</td></tr>';
-                }
-            } catch(e) { console.error(e); }
-        }
-        fetchData();
-        setInterval(fetchData, 30000);
-    </script>
+<div class="header">
+  ⚡ 竞价选股 · 真实定盘版
+  <div class="sub">9:25-9:30 竞价定盘 · 今开价=真实开盘价 · 非投资建议</div>
+</div>
+<div class="status closed" id="status">加载中...</div>
+<div class="meta" id="meta"></div>
+<div class="card">
+  <table>
+    <tr><th>代码/名称</th><th>竞价价</th><th>涨幅%</th><th>成交量</th><th>成交额(万)</th><th>评级</th><th>评分</th></tr>
+    <tbody id="tb"><tr><td colspan="7" style="text-align:center;color:#94a3b8">加载中...</td></tr></tbody>
+  </table>
+</div>
+<div class="refresh">每30秒自动刷新 · 9:25-9:30 期间数据最真实</div>
+<script>
+function load(){
+  fetch("/api/data").then(r=>r.json()).then(res=>{
+    const s=document.getElementById("status");
+    s.textContent=res.phase_text;
+    s.className="status "+(res.phase==="auction_final"?"active":res.phase==="auction_real"?"battle":res.phase==="auction_fake"?"fake":res.phase==="continuous"?"continuous":"closed");
+    document.getElementById("meta").textContent="更新 "+res.time+" · 命中 "+res.count+" 只";
+    const tb=document.getElementById("tb");
+    if(res.data&&res.data.length&&res.data[0].code!=="ERR"){
+      tb.innerHTML=res.data.map(x=>`
+        <tr>
+          <td>${x.code}<br>${x.name}</td>
+          <td>${x.price}</td>
+          <td class="up">${x.pct}%</td>
+          <td>${x.vol}</td>
+          <td>${x.amount}</td>
+          <td><span class="badge ${x.level}">${x.level}</span></td>
+          <td>${x.score}</td>
+        </tr>`).join("");
+    } else {
+      tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#fbbf24">暂无数据 · 竞价时段(9:25-9:30)自动出现</td></tr>';
+    }
+  }).catch(()=>{});
+}
+load();setInterval(load,30000);
+</script>
 </body>
 </html>
