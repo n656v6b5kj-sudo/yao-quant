@@ -7,20 +7,26 @@
     <style>
         body { font-family: -apple-system, sans-serif; padding: 15px; background: #f5f5f5; }
         h2 { margin-bottom: 10px; }
-        .status { padding: 8px; border-radius: 4px; margin-bottom: 15px; font-weight: bold; }
+        .status { padding: 8px; border-radius: 4px; margin-bottom: 10px; font-weight: bold; }
         .active { background: #d4edda; color: #155724; }
         .inactive { background: #fff3cd; color: #856404; }
-        table { width: 100%; border-collapse: collapse; background: #fff; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-size: 14px; }
+        .meta { font-size: 12px; color: #666; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+        th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: right; }
         th { background: #f8f9fa; text-align: center; }
         td:first-child, th:first-child { text-align: left; }
-        .up { color: #c0392b; } /* 红涨 */
-        .down { color: #27ae60; } /* 绿跌 */
+        .up { color: #c0392b; }
+        .down { color: #27ae60; }
+        .S { background: #c0392b; color: #fff; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
+        .A { background: #e67e22; color: #fff; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
+        .B { background: #f1c40f; color: #333; padding: 2px 5px; border-radius: 3px; font-size: 11px; }
+        .C { color: #999; }
     </style>
 </head>
 <body>
     <h2>📈 早盘竞价选股</h2>
     <div id="status" class="status inactive">加载中...</div>
+    <div class="meta" id="meta"></div>
     <table>
         <thead>
             <tr>
@@ -28,52 +34,45 @@
                 <th>竞价价</th>
                 <th>涨幅</th>
                 <th>成交量</th>
-                <th>成交额</th>
+                <th>成交额(万)</th>
+                <th>评级</th>
             </tr>
         </thead>
         <tbody id="data-body">
-            <tr><td colspan="5" style="text-align:center;">暂无数据</td></tr>
+            <tr><td colspan="6" style="text-align:center;">暂无数据</td></tr>
         </tbody>
     </table>
-
     <script>
         async function fetchData() {
             try {
                 const res = await fetch('/api/data');
                 const json = await res.json();
-                const statusEl = document.getElementById('status');
-                if (json.active) {
-                    statusEl.textContent = '🟢 当前处于竞价时段 (9:15-9:25)';
-                    statusEl.className = 'status active';
-                } else {
-                    statusEl.textContent = '🟡 非竞价时段，展示最近数据';
-                    statusEl.className = 'status inactive';
-                }
-                
-                const tbody = document.getElementById('data-body');
-                tbody.innerHTML = '';
-                if (json.data && json.data.length > 0) {
-                    json.data.forEach(row => {
+                document.getElementById('status').textContent = json.active ? '🟢 竞价时段' : '🟡 非竞价时段';
+                document.getElementById('status').className = 'status ' + (json.active ? 'active' : 'inactive');
+                document.getElementById('meta').textContent = `更新: ${json.time || '-'} | 命中: ${json.count || 0} 只`;
+                const tb = document.getElementById('data-body');
+                tb.innerHTML = '';
+                if (json.data && json.data.length) {
+                    json.data.forEach(r => {
                         const tr = document.createElement('tr');
-                        const pctClass = row.pct >= 0 ? 'up' : 'down';
+                        const pctCls = parseFloat(r.pct) >= 0 ? 'up' : 'down';
                         tr.innerHTML = `
-                            <td>${row.code}<br>${row.name}</td>
-                            <td>${row.price}</td>
-                            <td class="${pctClass}">${row.pct}%</td>
-                            <td>${row.vol}</td>
-                            <td>${row.amount}</td>
+                            <td>${r.code}<br>${r.name}</td>
+                            <td>${r.price}</td>
+                            <td class="${pctCls}">${r.pct}%</td>
+                            <td>${r.vol}</td>
+                            <td>${r.amount}</td>
+                            <td><span class="${r.level}">${r.level}</span></td>
                         `;
-                        tbody.appendChild(tr);
+                        tb.appendChild(tr);
                     });
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">无数据（可能接口暂未更新）</td></tr>';
+                    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;">无数据（接口未更新或非竞价）</td></tr>';
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch(e) { console.error(e); }
         }
         fetchData();
-        setInterval(fetchData, 30000); // 每30秒刷新
+        setInterval(fetchData, 30000);
     </script>
 </body>
 </html>
