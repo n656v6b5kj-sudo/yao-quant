@@ -3,52 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>妖股挖掘·实战版</title>
+<title>竞价选股 · 精准版</title>
 <style>
-body{margin:0;font-family:-apple-system,sans-serif;background:#f5f5f5}
-.header{background:linear-gradient(135deg,#1E3A8A,#1E40AF);color:#fff;padding:14px;text-align:center;font-size:18px}
-.sub{font-size:12px;opacity:.8;margin-top:4px}
-.card{background:#fff;margin:10px;border-radius:10px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-.up{color:#E53E3E;font-weight:700}
-.badge{padding:2px 8px;border-radius:10px;font-size:12px;font-weight:700}
-.S{background:#FEF3C7;color:#92400E}
-.A{background:#FEE2E2;color:#991B1B}
-.B{background:#DBEAFE;color:#1E40AF}
-.C{background:#F3F4F6;color:#666}
-.refresh{text-align:center;color:#888;font-size:12px;margin:6px}
+body{margin:0;font-family:-apple-system,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#dc2626,#ea580c);padding:16px;text-align:center;font-size:19px;font-weight:700}
+.sub{font-size:12px;opacity:.85;margin-top:4px}
+.status{text-align:center;font-size:12px;padding:6px;color:#fbbf24}
+.card{background:#1e293b;margin:10px;border-radius:12px;padding:8px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:#94a3b8;font-weight:600;padding:8px;border-bottom:1px solid #334155;white-space:nowrap}
+td{padding:8px;border-bottom:1px solid #334155;white-space:nowrap}
+.up{color:#f87171;font-weight:700}
+.badge{padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700}
+.S{background:#fef3c7;color:#92400e}.A{background:#fee2e2;color:#991b1b}
+.B{background:#dbeafe;color:#1e40af}.C{background:#475569;color:#cbd5e1}
+.refresh{text-align:center;color:#64748b;font-size:11px;margin:6px}
 </style>
 </head>
 <body>
 <div class="header">
-  🐲 妖股挖掘·实战版
-  <div class="sub">数据：AkShare/东方财富涨停池（盘后定型，非投资建议）</div>
+  ⚡ 竞价选股 · 精准版
+  <div class="sub">9:25撮合价 · 量比 · 未匹配买盘 · 非投资建议</div>
 </div>
-<div class="refresh">每5分钟缓存 · 非交易时段可能为空</div>
+<div class="status" id="status">加载中...</div>
+<div class="refresh">更新时间 <span id="t"></span> · 每60秒自动刷新</div>
 <div class="card">
   <table>
-    <tr><th>代码</th><th>名称</th><th>涨%</th><th>连板</th><th>封板资金</th><th>评分</th><th>评级</th><th>题材</th></tr>
-    <tbody id="tb">加载中...</tbody>
+    <tr>
+      <th>代码</th><th>名称</th><th>竞价涨%</th><th>撮合价</th>
+      <th>撮合(万)</th><th>量比</th><th>买盘(万手)</th><th>评分</th><th>级</th>
+    </tr>
+    <tbody id="tb"><tr><td colspan="9" style="text-align:center;color:#94a3b8">加载中...</td></tr></tbody>
   </table>
 </div>
 <script>
-fetch("/api/dashboard")
-  .then(r=>r.json())
-  .then(d=>{
-    document.getElementById("tb").innerHTML = d.map(x=>`
+function load(){
+  fetch("/api/data").then(r=>r.json()).then(res=>{
+    const st=document.getElementById("status");
+    if(res.jingjia){st.innerHTML="🟢 竞价进行中（9:15-9:25 实时撮合）";st.style.color="#4ade80";}
+    else{st.innerHTML="⚪ 非竞价时段 · 展示最近快照（可盘后复盘）";st.style.color="#fbbf24";}
+    document.getElementById("t").innerText=res.updated;
+    document.getElementById("tb").innerHTML=res.data.map(x=>`
       <tr>
-        <td>${x.code}</td>
-        <td>${x.name}</td>
-        <td class="up">+${x.pct}%</td>
-        <td>${x.lianban}板</td>
-        <td>${(x.seal_money/10000).toFixed(0)}万</td>
-        <td>${x.score}</td>
+        <td>${x.code}</td><td>${x.name}</td>
+        <td class="up">+${x.pct}%</td><td>${x.call_price}</td>
+        <td>${x.amount_wan}</td><td>${x.liangbi}</td>
+        <td>${x.buy_unmatched_wan}</td><td>${x.score}</td>
         <td><span class="badge ${x.grade}">${x.grade}</span></td>
-        <td>${x.reason}</td>
       </tr>`).join("");
-  })
-  .catch(()=>document.getElementById("tb").innerHTML="<tr><td colspan=8>加载失败</td></tr>");
+  }).catch(()=>{document.getElementById("tb").innerHTML='<tr><td colspan="9" style="text-align:center;color:#f87171">加载失败，稍后重试</td></tr>';});
+}
+load(); setInterval(load,60000);
 </script>
 </body>
 </html>
