@@ -1,0 +1,4 @@
+flask
+akshare
+gunicorn
+flask-caching
